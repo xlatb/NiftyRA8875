@@ -38,7 +38,7 @@ enum RA8875_Layer_Mode
 #define RA8875_ROM_TEXT_WIDTH  8
 #define RA8875_ROM_TEXT_HEIGHT 16
 
-// With SPI, the RA8875 expects an initial byte where the top two bits are meaningful. But 7
+// With SPI, the RA8875 expects an initial byte where the top two bits are meaningful. Bit 7
 // is RS, bit 6 is RW. See data sheet section 6-1-2-2.
 // RS: 0 for data, 1 for command
 // RW: 0 for write, 1 for read
