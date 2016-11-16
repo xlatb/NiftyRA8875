@@ -9,7 +9,7 @@
 #define RA8875_PRINT_TIMING 0
 
 //#define RGBPACK(r, g, b) ((((r) & 0x07) << 5) | (((g) & 0x07) << 2) | ((b) & 0x03))
-#define RGB332(r, g, b) (((r) & 0xE0) | (((g) & 0xE0) >> 3) | (((b) & 0xB0) >> 6))
+#define RGB332(r, g, b) (((r) & 0xE0) | (((g) & 0xE0) >> 3) | (((b) & 0xE0) >> 6))
 
 // TODO: Try 1MHz. What speed is the RA8875 capable of? Datasheet says:
 // The maximum clock rate of 4-Wire SPI write SCL is system clock / 3 (i.e. SPI clock high duty
