@@ -51,14 +51,13 @@ uint8_t RA8875::readReg(uint8_t reg)
 
 RA8875::RA8875(int csPin, int intPin, int resetPin)
 {
-  m_width = 480;
-  m_height = 272;
-  
   m_csPin    = csPin;
   m_intPin   = intPin;
   m_resetPin = resetPin;
 
-  m_textColor = RGB332(255, 255, 255);
+  m_width  = 0;
+  m_height = 0;
+  m_depth  = 0;
 }
 
 // Pulse the reset pin low
@@ -113,8 +112,23 @@ void RA8875::initPLL(void)
   SPI.endTransaction();
 }
 
-bool RA8875::init(void)
+bool RA8875::init(int width, int height, int depth)
 {
+  // Check resolution
+  if ((width != 480) || (height != 272))
+    return false;
+
+  // Check colour depth
+  if ((depth != 8) && (depth != 16))
+    return false;
+
+  m_width  = width;
+  m_height = height;
+  m_depth  = depth;
+
+  // TODO: Fix for depth 16
+  m_textColor = RGB332(255, 255, 255);
+
   pinMode(m_csPin, OUTPUT);
   pinMode(m_intPin, INPUT);
 
@@ -145,11 +159,10 @@ bool RA8875::init(void)
 
   SPI.beginTransaction(m_spiSettings);
 
-  writeCmd(RA8875_REG_SYSR);
-  writeData(0x00);  // 8-bit MCU interface with 256-colour mode
+  // Set colour depth
+  writeReg(RA8875_REG_SYSR, (m_depth == 16) ? 0x08 : 0x00);
 
-  writeCmd(RA8875_REG_PCSR);
-  writeData(0x82);  // 0x80 = PDAT fetched at PCLK falling edge, 0x02 = PCLK period is 4 times system clock period
+  writeReg(RA8875_REG_PCSR, 0x82);  // 0x80 = PDAT fetched at PCLK falling edge, 0x02 = PCLK period is 4 times system clock period
 
   delay(5);
 

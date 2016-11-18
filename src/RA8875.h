@@ -170,6 +170,7 @@ private:
 
   int m_width;
   int m_height;
+  int m_depth;
 
   uint8_t m_textColor;
 
@@ -193,7 +194,7 @@ public:
   RA8875(int csPin, int intPin, int resetPin = 0);
 
   // Init
-  bool init();
+  bool init(int width, int height, int depth);
   void clearMemory();
   void setBacklight(bool enabled);
   

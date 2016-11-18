@@ -17,8 +17,14 @@ void setup()
   delay(2000);
 
   Serial.println("Hello!");
-  
-  tft.init();
+
+  // Initialize screen
+  if (!tft.init(480, 272, 8))
+  {
+    Serial.println("TFT init failed.");
+    return;
+  }
+
   tft.clearMemory();
   tft.setBacklight(true);
   tft.setScrollWindow(0, 479, 0, 271);
