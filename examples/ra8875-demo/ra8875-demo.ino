@@ -18,8 +18,7 @@ void setup()
 
   Serial.println("Hello!");
 
-  // Initialize screen
-  if (!tft.init(480, 272, 8))
+  if (!tft.init(480, 272, 16))
   {
     Serial.println("TFT init failed.");
     return;
@@ -91,9 +90,9 @@ void gradientTest()
   
   for (int i = 0; i <= 255; i++)
   {
-    tft.fillRect((width / 256.0) * i, 0, (width / 256.0) * i + 1, barHeight, RGB332(i, 0, 0));
-    tft.fillRect((width / 256.0) * i, barHeight, (width / 256.0) * i + 1, barHeight * 2, RGB332(0, i, 0));
-    tft.fillRect((width / 256.0) * i, barHeight * 2, (width / 256.0) * i + 1, barHeight * 3, RGB332(0, 0, i));
+    tft.fillRect((width / 256.0) * i, 0, (width / 256.0) * i + 1, barHeight, RGB565(i, 0, 0));
+    tft.fillRect((width / 256.0) * i, barHeight, (width / 256.0) * i + 1, barHeight * 2, RGB565(0, i, 0));
+    tft.fillRect((width / 256.0) * i, barHeight * 2, (width / 256.0) * i + 1, barHeight * 3, RGB565(0, 0, i));
     //tft.fillRect(0, 0, 479, 271, RGB332(0, i, 0));
     //tft.fillRect(0, 0, 479, 271, RGB332(0, 0, i));
   }

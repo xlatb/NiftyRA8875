@@ -10,6 +10,7 @@
 
 //#define RGBPACK(r, g, b) ((((r) & 0x07) << 5) | (((g) & 0x07) << 2) | ((b) & 0x03))
 #define RGB332(r, g, b) (((r) & 0xE0) | (((g) & 0xE0) >> 3) | (((b) & 0xE0) >> 6))
+#define RGB565(r, g, b) ((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | (((b) & 0xF8) >> 3))
 
 // TODO: Try 1MHz. What speed is the RA8875 capable of? Datasheet says:
 // The maximum clock rate of 4-Wire SPI write SCL is system clock / 3 (i.e. SPI clock high duty
@@ -172,7 +173,7 @@ private:
   int m_height;
   int m_depth;
 
-  uint8_t m_textColor;
+  uint16_t m_textColor;
 
   SPISettings m_spiSettings;
 
@@ -229,9 +230,9 @@ public:
   void setDrawLayer(int layer);
 
   // Drawing
-  void drawPixel(int x, int y, uint8_t color);
+  void drawPixel(int x, int y, uint16_t color);
   void setDrawPosition(int x, int y);
-  void pushPixel(uint8_t color);
+  void pushPixel(uint16_t color);
 
   // Block transfer
   void copyToScreen(int srcX, int srcY, int width, int height, int dstX, int dstY) { copyToScreen(srcX, srcY, width, height, dstX, dstY, false, 0); };
@@ -241,10 +242,10 @@ public:
   void copy(int srcLayer, int srcX, int srcY, int width, int height, int dstLayer, int dstX, int dstY, bool transparent, uint8_t bgColor);
 
   // Shapes
-  void drawTwoPointShape(int x1, int y1, int x2, int y2, uint8_t color, uint8_t cmd);
-  void drawRect(int x1, int y1, int x2, int y2, uint8_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x10); };
-  void fillRect(int x1, int y1, int x2, int y2, uint8_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x30); };
-  void drawLine(int x1, int y1, int x2, int y2, uint8_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x00); };
+  void drawTwoPointShape(int x1, int y1, int x2, int y2, uint16_t color, uint8_t cmd);
+  void drawRect(int x1, int y1, int x2, int y2, uint16_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x10); };
+  void fillRect(int x1, int y1, int x2, int y2, uint16_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x30); };
+  void drawLine(int x1, int y1, int x2, int y2, uint16_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x00); };
 };
 
 #endif

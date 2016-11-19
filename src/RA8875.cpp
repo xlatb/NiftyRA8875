@@ -126,8 +126,7 @@ bool RA8875::init(int width, int height, int depth)
   m_height = height;
   m_depth  = depth;
 
-  // TODO: Fix for depth 16
-  m_textColor = RGB332(255, 255, 255);
+  m_textColor = RGB565(255, 255, 255);
 
   pinMode(m_csPin, OUTPUT);
   pinMode(m_intPin, INPUT);
@@ -292,9 +291,9 @@ void RA8875::setMode(RA8875_Mode mode)
     writeData(mwcr0 | 0x80);  // Enable text mode
 
     // Restore text colour
-    writeReg(RA8875_REG_FGCR0, m_textColor >> 5);           // R
-    writeReg(RA8875_REG_FGCR1, (m_textColor & 0x1C) >> 2);  // G
-    writeReg(RA8875_REG_FGCR2, m_textColor & 0x3);          // B
+    writeReg(RA8875_REG_FGCR0, m_textColor >> 11);            // R
+    writeReg(RA8875_REG_FGCR1, (m_textColor & 0x07E0) >> 5);  // G
+    writeReg(RA8875_REG_FGCR2, m_textColor & 0x1F);           // B
 
     writeReg(RA8875_REG_FNCR0, 0x00);  // ROM font, internal ROM, charset ISO8859-1
 //    writeCmd(RA8875_REG_FNCR0);
@@ -523,7 +522,7 @@ void RA8875::setDrawLayer(int layer)
   SPI.endTransaction();
 }
 
-void RA8875::drawPixel(int x, int y, uint8_t color)
+void RA8875::drawPixel(int x, int y, uint16_t color)
 {
   SPI.beginTransaction(m_spiSettings);
 
@@ -534,7 +533,15 @@ void RA8875::drawPixel(int x, int y, uint8_t color)
   writeReg(RA8875_REG_CURV1, y >> 8);  
   
   writeCmd(RA8875_REG_MRWC);
-  writeData(color);
+
+  if (m_depth == 8)
+    writeData(color);
+  else
+  {
+    writeData(color >> 8);
+    writeData(color & 0xFF);
+  }
+
 //  digitalWrite(m_csPin, LOW);
 //  SPI.transfer(RA8875_DATA_WRITE);
 //  SPI.transfer(color);
@@ -555,11 +562,19 @@ void RA8875::setDrawPosition(int x, int y)
   SPI.endTransaction();
 }
 
-void RA8875::pushPixel(uint8_t color)
+void RA8875::pushPixel(uint16_t color)
 {
   SPI.beginTransaction(m_spiSettings);
 
-  writeReg(RA8875_REG_MRWC, color);
+  writeCmd(RA8875_REG_MRWC);
+
+  if (m_depth == 8)
+    writeData(color);
+  else
+  {
+    writeData(color >> 8);
+    writeData(color & 0xFF);
+  }
 
   SPI.endTransaction();
 }
@@ -740,7 +755,7 @@ void RA8875::copy(int srcLayer, int srcX, int srcY, int width, int height, int d
 }
 
 // Draws a 2-point shape (line, outline rect, filled rect)
-void RA8875::drawTwoPointShape(int x1, int y1, int x2, int y2, uint8_t color, uint8_t cmd)
+void RA8875::drawTwoPointShape(int x1, int y1, int x2, int y2, uint16_t color, uint8_t cmd)
 {
   SPI.beginTransaction(m_spiSettings);
 
@@ -757,9 +772,9 @@ void RA8875::drawTwoPointShape(int x1, int y1, int x2, int y2, uint8_t color, ui
   writeReg(RA8875_REG_DLVER1, y2 >> 8);
 
   // Color
-  writeReg(RA8875_REG_FGCR0, color >> 5);           // R
-  writeReg(RA8875_REG_FGCR1, (color & 0x1C) >> 2);  // G
-  writeReg(RA8875_REG_FGCR2, color & 0x3);          // B
+  writeReg(RA8875_REG_FGCR0, color >> 11);            // R
+  writeReg(RA8875_REG_FGCR1, (color & 0x07E0) >> 5);  // G
+  writeReg(RA8875_REG_FGCR2, color & 0x1F);           // B
 
   // Begin drawing
   writeReg(RA8875_REG_DCR, 0x80 | cmd);
