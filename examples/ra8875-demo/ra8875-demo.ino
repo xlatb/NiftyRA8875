@@ -90,17 +90,20 @@ void gradientTest()
   tft.clearMemory();
 
   int width = tft.getWidth();
-  int barHeight = tft.getHeight() / 3;
+  int barHeight = tft.getHeight() / 4;
+
+  uint32_t starttime = millis();
   
   for (int i = 0; i <= 255; i++)
   {
     tft.fillRect((width / 256.0) * i, 0, (width / 256.0) * i + 1, barHeight, RGB565(i, 0, 0));
     tft.fillRect((width / 256.0) * i, barHeight, (width / 256.0) * i + 1, barHeight * 2, RGB565(0, i, 0));
     tft.fillRect((width / 256.0) * i, barHeight * 2, (width / 256.0) * i + 1, barHeight * 3, RGB565(0, 0, i));
-    //tft.fillRect(0, 0, 479, 271, RGB332(0, i, 0));
-    //tft.fillRect(0, 0, 479, 271, RGB332(0, 0, i));
+    tft.fillRect((width / 256.0) * i, barHeight * 3, (width / 256.0) * i + 1, barHeight * 4, RGB565(i, i, i));
   }
-  
+
+  uint32_t elapsedtime = millis() - starttime;
+  Serial.print("Gradient test took "); Serial.print(elapsedtime); Serial.println(" ms");
 }
 
 void pixelTest()
