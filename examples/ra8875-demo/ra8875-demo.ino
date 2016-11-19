@@ -39,6 +39,10 @@ void setup()
   delay(1000);
 
   pixelTest();
+
+  delay(1000);
+
+  triangleTest();
   
   delay(1000);
 
@@ -114,6 +118,33 @@ void pixelTest()
     tft.drawPixel(x, y, 0x55);
   }
     
+}
+
+void triangleTest()
+{
+  Serial.println("Triangle test.");
+
+  int width = tft.getWidth();
+  int height = tft.getHeight();
+
+  uint32_t starttime = millis();
+
+  for (int i = 0; i < 2000; i++)
+  {
+    int x1 = random(0, width);
+    int y1 = random(0, height);
+    int x2 = random(0, width);
+    int y2 = random(0, height);
+    int x3 = random(0, width);
+    int y3 = random(0, height);
+
+    uint16_t color = RGB565(random(0, 255), random(0, 255), random(0, 255));
+
+    tft.fillTriangle(x1, y1, x2, y2, x3, y3, color);
+  }
+
+  uint32_t elapsedtime = millis() - starttime;
+  Serial.print("Triangle test took "); Serial.print(elapsedtime); Serial.println(" ms");
 }
 
 void loop()

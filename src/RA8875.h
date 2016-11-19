@@ -154,6 +154,10 @@ enum RA8875_Layer_Mode
 #define RA8875_REG_DLHER1 0x96  // Draw Line Horizontal End Register 1
 #define RA8875_REG_DLVER0 0x97  // Draw Line Vertical End Register 0
 #define RA8875_REG_DLVER1 0x98  // Draw Line Vertical End Register 1
+#define RA8875_REG_DTPH0  0xA9  // Draw Triangle Point Horizontal Register 0
+#define RA8875_REG_DTPH1  0xAA  // Draw Triangle Point Horizontal Register 1
+#define RA8875_REG_DTPV0  0xAB  // Draw Triangle Point Vertical Register 0
+#define RA8875_REG_DTPV1  0xAC  // Draw Triangle Point Vertical Register 1
 
 // Data sheet 5-13: Key & IO control registers
 #define RA8875_REG_GPIOX  0xC7  // Extra general purpose IO register
@@ -246,6 +250,9 @@ public:
   void drawRect(int x1, int y1, int x2, int y2, uint16_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x10); };
   void fillRect(int x1, int y1, int x2, int y2, uint16_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x30); };
   void drawLine(int x1, int y1, int x2, int y2, uint16_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x00); };
+  void drawThreePointShape(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color, uint8_t cmd);
+  void drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color) { drawThreePointShape(x1, y1, x2, y2, x3, y3, color, 0x01); };
+  void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color) { drawThreePointShape(x1, y1, x2, y2, x3, y3, color, 0x21); };
 };
 
 #endif

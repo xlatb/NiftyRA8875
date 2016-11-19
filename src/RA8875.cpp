@@ -786,3 +786,40 @@ void RA8875::drawTwoPointShape(int x1, int y1, int x2, int y2, uint16_t color, u
   SPI.endTransaction();  
 }
 
+// Draw 3-point shape (triangle or filled triangle)
+void RA8875::drawThreePointShape(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color, uint8_t cmd)
+{
+  SPI.beginTransaction(m_spiSettings);
+
+  // First point
+  writeReg(RA8875_REG_DLHSR0, x1 & 0xFF);
+  writeReg(RA8875_REG_DLHSR1, x1 >> 8);
+  writeReg(RA8875_REG_DLVSR0, y1 & 0xFF);
+  writeReg(RA8875_REG_DLVSR1, y1 >> 8);
+
+  // Second point
+  writeReg(RA8875_REG_DLHER0, x2 & 0xFF);
+  writeReg(RA8875_REG_DLHER1, x2 >> 8);
+  writeReg(RA8875_REG_DLVER0, y2 & 0xFF);
+  writeReg(RA8875_REG_DLVER1, y2 >> 8);
+
+  // Third point
+  writeReg(RA8875_REG_DTPH0, x3 & 0xFF);
+  writeReg(RA8875_REG_DTPH1, x3 >> 8);
+  writeReg(RA8875_REG_DTPV0, y3 & 0xFF);
+  writeReg(RA8875_REG_DTPV1, y3 >> 8);
+
+  // Color
+  writeReg(RA8875_REG_FGCR0, color >> 11);            // R
+  writeReg(RA8875_REG_FGCR1, (color & 0x07E0) >> 5);  // G
+  writeReg(RA8875_REG_FGCR2, color & 0x1F);           // B
+
+  // Begin drawing
+  writeReg(RA8875_REG_DCR, 0x80 | cmd);
+
+  // Wait for completion
+  while (readReg(RA8875_REG_DCR) & 0x80)
+    ;
+
+  SPI.endTransaction();
+}
