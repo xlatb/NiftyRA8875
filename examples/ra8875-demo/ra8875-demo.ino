@@ -46,6 +46,10 @@ void setup()
   
   delay(1000);
 
+  circleTest();
+
+  delay(1000);
+
   gradientTest();
 
   //tft.setLayerMode(RA8875_LAYER_OR);
@@ -148,6 +152,30 @@ void triangleTest()
 
   uint32_t elapsedtime = millis() - starttime;
   Serial.print("Triangle test took "); Serial.print(elapsedtime); Serial.println(" ms");
+}
+
+void circleTest()
+{
+  Serial.println("Circle test.");
+
+  int width = tft.getWidth();
+  int height = tft.getHeight();
+
+  uint32_t starttime = millis();
+
+  for (int i = 0; i < 200; i++)
+  {
+    int x = random(0, width);
+    int y = random(0, height);
+    int r = random(0, 255);
+
+    uint16_t color = RGB565(random(0, 255), random(0, 255), random(0, 255));
+
+    tft.fillCircle(x, y, r, color);
+  }
+
+  uint32_t elapsedtime = millis() - starttime;
+  Serial.print("Circle test took "); Serial.print(elapsedtime); Serial.println(" ms");
 }
 
 void loop()

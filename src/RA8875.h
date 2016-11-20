@@ -154,6 +154,11 @@ enum RA8875_Layer_Mode
 #define RA8875_REG_DLHER1 0x96  // Draw Line Horizontal End Register 1
 #define RA8875_REG_DLVER0 0x97  // Draw Line Vertical End Register 0
 #define RA8875_REG_DLVER1 0x98  // Draw Line Vertical End Register 1
+#define RA8875_REG_DCHR0  0x99  // Draw Circle Horizontal Register 0
+#define RA8875_REG_DCHR1  0x9A  // Draw Circle Horizontal Register 1
+#define RA8875_REG_DCVR0  0x9B  // Draw Circle Vertical Register 0
+#define RA8875_REG_DCVR1  0x9C  // Draw Circle Vertical Register 1
+#define RA8875_REG_DCRR   0x9D  // Draw Cricle Radius Register
 #define RA8875_REG_DTPH0  0xA9  // Draw Triangle Point Horizontal Register 0
 #define RA8875_REG_DTPH1  0xAA  // Draw Triangle Point Horizontal Register 1
 #define RA8875_REG_DTPV0  0xAB  // Draw Triangle Point Vertical Register 0
@@ -245,14 +250,19 @@ public:
   void copy(int srcLayer, int srcX, int srcY, int width, int height, int dstLayer, int dstX, int dstY) { copy(srcLayer, srcX, srcY, width, height, dstLayer, dstX, dstY, false, 0); };
   void copy(int srcLayer, int srcX, int srcY, int width, int height, int dstLayer, int dstX, int dstY, bool transparent, uint8_t bgColor);
 
-  // Shapes
+  // Low-level shapes
   void drawTwoPointShape(int x1, int y1, int x2, int y2, uint16_t color, uint8_t cmd);
+  void drawThreePointShape(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color, uint8_t cmd);
+  void drawCircleShape(int x, int y, int radius, uint16_t color, uint8_t cmd);
+
+  // Shapes
   void drawRect(int x1, int y1, int x2, int y2, uint16_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x10); };
   void fillRect(int x1, int y1, int x2, int y2, uint16_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x30); };
   void drawLine(int x1, int y1, int x2, int y2, uint16_t color) { drawTwoPointShape(x1, y1, x2, y2, color, 0x00); };
-  void drawThreePointShape(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color, uint8_t cmd);
   void drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color) { drawThreePointShape(x1, y1, x2, y2, x3, y3, color, 0x01); };
   void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color) { drawThreePointShape(x1, y1, x2, y2, x3, y3, color, 0x21); };
+  void drawCircle(int x, int y, int radius, uint16_t color) { drawCircleShape(x, y, radius, color, 0x00); };
+  void fillCircle(int x, int y, int radius, uint16_t color) { drawCircleShape(x, y, radius, color, 0x20); };
 };
 
 #endif

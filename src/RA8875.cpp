@@ -823,3 +823,32 @@ void RA8875::drawThreePointShape(int x1, int y1, int x2, int y2, int x3, int y3,
 
   SPI.endTransaction();
 }
+
+// Draw circle shape (circle or filled circle)
+void RA8875::drawCircleShape(int x, int y, int radius, uint16_t color, uint8_t cmd)
+{
+  SPI.beginTransaction(m_spiSettings);
+
+  // Centre point
+  writeReg(RA8875_REG_DCHR0, x & 0xFF);
+  writeReg(RA8875_REG_DCHR1, x >> 8);
+  writeReg(RA8875_REG_DCVR0, y & 0xFF);
+  writeReg(RA8875_REG_DCVR1, y >> 8);
+
+  // Radius
+  writeReg(RA8875_REG_DCRR, radius);
+
+  // Color
+  writeReg(RA8875_REG_FGCR0, color >> 11);            // R
+  writeReg(RA8875_REG_FGCR1, (color & 0x07E0) >> 5);  // G
+  writeReg(RA8875_REG_FGCR2, color & 0x1F);           // B
+
+  // Begin drawing
+  writeReg(RA8875_REG_DCR, 0x40 | cmd);
+
+  // Wait for completion
+  while (readReg(RA8875_REG_DCR) & 0x40)
+    ;
+
+  SPI.endTransaction();
+}
