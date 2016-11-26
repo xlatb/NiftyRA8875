@@ -258,7 +258,7 @@ void RA8875::setActiveWindow(int xStart, int xEnd, int yStart, int yEnd)
   SPI.endTransaction();
 }
 
-// Clear's the frame buffer memory.
+// Clears the frame buffer memory.
 // This seems to only affect the current layer. You can call setDrawLayer() first to select which layer will be cleared.
 void RA8875::clearMemory(void)
 {
