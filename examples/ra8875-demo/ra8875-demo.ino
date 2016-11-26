@@ -52,6 +52,10 @@ void setup()
 
   gradientTest();
 
+  delay(1000);
+
+  smpteBarsTest();
+
   //tft.setLayerMode(RA8875_LAYER_OR);
 
   //tft.setDrawLayer(2);
@@ -85,6 +89,43 @@ void textTest()
   tft.println("Text size 4");
   
   Serial.println("Print text complete.");  
+}
+
+void smpteBarsTest()
+{
+  Serial.println("SMPTE colour bars test.");
+
+  tft.clearMemory();
+
+  int width = tft.getWidth();
+  int height = tft.getHeight();
+
+  int barWidth = width / 7;
+  int boxWidth = width * (7.0 / 40.0);
+
+  int barHeight = height * (2.0 / 3.0);  // Top two thirds
+  int miniBarHeight = height * (1.0 / 3.0 / 4.0);  // One quarter of remaining third
+
+  // Top and middle bars
+  for (int i = 0; i < 7; i++)
+  {
+    // Main top bar
+    int r = ((i % 4) < 2) ? (255 * 0.75) : 0;
+    int g = (i < 4) ? (255 * 0.75) : 0;
+    int b = (i % 2) ? 0 : (255 * 0.75);
+    tft.fillRect(barWidth * i, 0, barWidth * (i + 1) - 1, barHeight, RGB565(r, g, b));
+
+     // Mini middle bar
+    if ((i % 2) == 0)
+    {
+      tft.fillRect((barWidth * 7) - (barWidth * i), barHeight + 1, (barWidth * 7) - (barWidth * (i + 1) - 1), barHeight + miniBarHeight, RGB565(r, g, b));
+    }
+  }
+
+  // Bottom boxes
+  tft.fillRect(0, barHeight + miniBarHeight + 1, boxWidth - 1, height, RGB565(0, 0, 16));  // Dark blue
+  tft.fillRect(boxWidth, barHeight + miniBarHeight + 1, boxWidth * 2 - 1, height, RGB565(255, 255, 255));  // White
+  tft.fillRect(boxWidth * 2, barHeight + miniBarHeight + 1, boxWidth * 3 - 1, height, RGB565(16, 0, 16));  // Dark purple
 }
 
 void gradientTest()
