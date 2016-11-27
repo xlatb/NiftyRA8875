@@ -10,11 +10,14 @@ Arduino library for interfacing with RA8875 graphics chip over SPI.
 
 Tested with displays:
 
-* Buydisplay.com ER-TFTM050-2
+* EastRising (buydisplay.com) ER-TFTM050-2
+* Laurel Electronics (laurellcd.com) LT043C
 
 Tested with microcontroller boards:
 
 * Adafruit Feather M0
+* Adafruit Feather 32u4
+* Arduino Due
 
 # Other Libraries for RA8875
 
