@@ -428,30 +428,94 @@ int RA8875::getTextSizeY(void)
   return (fncr1 & 0x03) + 1;
 }
 
-void RA8875::print(const char *s)
+// Write a single byte (called from class Print).
+size_t RA8875::write(uint8_t c)
+{
+  if (c == '\r')
+    return 1;  // Ignored
+  else if (c == '\n')
+    setCursor(0, getCursorY() + (RA8875_ROM_TEXT_HEIGHT * getTextSizeY()));
+  else
+  {
+    setMode(RA8875_MODE_TEXT);
+
+    SPI.beginTransaction(m_spiSettings);
+
+    writeCmd(RA8875_REG_MRWC);
+
+    writeData(c);
+    delay(5);
+
+    SPI.endTransaction();
+
+    setMode(RA8875_MODE_GRAPHICS);
+  }
+
+  return 1;
+}
+
+// Write a string to the display (called from class Print).
+size_t RA8875::write(const char *s)
 {
   setMode(RA8875_MODE_TEXT);
-  
+
   SPI.beginTransaction(m_spiSettings);
 
   writeCmd(RA8875_REG_MRWC);
-  
+
+  size_t count = 0;
+
   while (char c = *s++)
   {
-    writeData(c);
-    delay(5);
+    count++;
+
+    if (c == '\r')
+      ;  // Ignored
+    else if (c == '\n')
+      setCursor(0, getCursorY() + (RA8875_ROM_TEXT_HEIGHT * getTextSizeY()));
+    else
+    {
+      writeData(c);
+      delay(5);
+    }
   }
 
   SPI.endTransaction();
 
   setMode(RA8875_MODE_GRAPHICS);
+
+  return count;
 }
 
-void RA8875::println(const char *s)
+// Write a number of bytes to the display (called from class Print).
+size_t RA8875::write(const uint8_t *bytes, size_t size)
 {
-  print(s);
+  setMode(RA8875_MODE_TEXT);
 
-  setCursor(0, getCursorY() + (RA8875_ROM_TEXT_HEIGHT * getTextSizeY()));
+  SPI.beginTransaction(m_spiSettings);
+
+  writeCmd(RA8875_REG_MRWC);
+
+  for (unsigned int i = 0; i < size; i++)
+  {
+    char c = bytes[i];
+
+    if (c == '\r')
+      ;  // Ignored
+    else if (c == '\n')
+      setCursor(0, getCursorY() + (RA8875_ROM_TEXT_HEIGHT * getTextSizeY()));
+    else
+    {
+      writeData(c);
+      delay(5);
+    }
+  }
+
+  SPI.endTransaction();
+
+  setMode(RA8875_MODE_GRAPHICS);
+
+  return size;
 }
 
 void RA8875::setScrollWindow(int xStart, int xEnd, int yStart, int yEnd)

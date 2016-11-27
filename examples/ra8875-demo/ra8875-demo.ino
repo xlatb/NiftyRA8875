@@ -76,17 +76,20 @@ void textTest()
   tft.setCursorVisibility(false, true);
   Serial.println("Set cursor visibility complete.");
 
+  // Test each underlying "write" method
   tft.setTextSize(1);
-  tft.println("Text size 1");
+  tft.write("Hello, ");
+  tft.write((const uint8_t *) "world", 5);
+  tft.write((uint8_t) '!');
+  tft.write((uint8_t) '\n');
 
-  tft.setTextSize(2);
-  tft.println("Text size 2");
-
-  tft.setTextSize(3);
-  tft.println("Text size 3");
-
-  tft.setTextSize(4);
-  tft.println("Text size 4");
+  // Test text sizes
+  for (int s = 1; s <= 4; s++)
+  {
+    tft.setTextSize(s);
+    tft.print("Text size ");
+    tft.println(s);
+  }
   
   Serial.println("Print text complete.");  
 }

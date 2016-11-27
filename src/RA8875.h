@@ -171,7 +171,7 @@ enum RA8875_Layer_Mode
 #define RA8875_REG_INTC1  0xF0  // Interrupt control register 1
 #define RA8875_REG_INTC2  0xF1  // Interrupt control register 2
 
-class RA8875
+class RA8875 : public Print
 {
 private:
   int m_csPin;
@@ -227,8 +227,9 @@ public:
   int getTextSizeY(void);
   
   // Text drawing
-  void print(const char *s);
-  void println(const char *s);
+  virtual size_t write(uint8_t);
+  virtual size_t write(const char *str);
+  virtual size_t write(const uint8_t *buffer, size_t size);
 
   // Scrolling
   void setScrollWindow(int xStart, int xEnd, int yStart, int yEnd);
