@@ -225,6 +225,10 @@ public:
   void setTextSize(int scale) { setTextSize(scale, scale); };
   int getTextSizeX(void);
   int getTextSizeY(void);
+
+  // Text colour
+  void setTextColor(uint16_t color) { m_textColor = color; };
+  void setTextColor(uint8_t r, uint8_t g, uint8_t b) { m_textColor = RGB565(r, g, b); };
   
   // Text drawing
   virtual size_t write(uint8_t);

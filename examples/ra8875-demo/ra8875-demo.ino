@@ -38,6 +38,10 @@ void setup()
 
   delay(1000);
 
+  textColorTest();
+
+  delay(1000);
+
   pixelTest();
 
   delay(1000);
@@ -92,6 +96,28 @@ void textTest()
   }
   
   Serial.println("Print text complete.");  
+}
+
+void textColorTest()
+{
+  Serial.println("Text colour test.");
+
+  int height = tft.getHeight();
+
+  tft.clearMemory();
+  tft.setTextSize(2);
+
+  // Test text colours
+  for (int i = 0; i < 8; i++)
+  {
+    uint16_t color = RGB565((i & 0x04) ? 255 : 0, (i & 0x02) ? 255 : 0, (i & 0x01) ? 255 : 0);
+
+    tft.setCursor(0, (height / 8) * i);
+    tft.setTextColor(color);
+    tft.print("Test");
+  }
+
+  Serial.println("Print text complete.");
 }
 
 void smpteBarsTest()
