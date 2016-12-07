@@ -18,6 +18,7 @@ Tested with microcontroller boards:
 * Adafruit Feather M0
 * Adafruit Feather 32u4
 * Arduino Due
+* Arduino Zero
 
 # Other Libraries for RA8875
 
