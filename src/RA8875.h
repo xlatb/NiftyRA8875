@@ -12,10 +12,18 @@
 #define RGB332(r, g, b) (((r) & 0xE0) | (((g) & 0xE0) >> 3) | (((b) & 0xE0) >> 6))
 #define RGB565(r, g, b) ((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | (((b) & 0xF8) >> 3))
 
-// TODO: Try 1MHz. What speed is the RA8875 capable of? Datasheet says:
+// TODO: Try 1MHz. What speed is the RA8875 capable of?
+// Datasheet says:
+// --- snip ---
 // The maximum clock rate of 4-Wire SPI write SCL is system clock / 3 (i.e. SPI clock high duty
-// must large than 1.5 system clock) and the maximum clock rate of 4-Wire SPI read SCL is system
-// clock / 6.
+//  must large than 1.5 system clock) and the maximum clock rate of 4-Wire SPI read SCL is system
+//  clock / 6.
+// --- snip ---
+// System clock (SYS_CLK) is set up by initPLL(). By default it is the same as the external
+//  crystal (presumed to be 20MHz), but can go as high as 60MHz.
+// The default of 20MHz / 6 is approximately 3MHz, so we wouldn't want to use a faster speed than
+//  that until the initPLL() step is completed. After initPLL() is done, we could conceivably try
+//  speeds as high as 9 or 10MHz.
 #define RA8875_SPI_SPEED 1000000
 
 enum RA8875_Mode
@@ -199,7 +207,8 @@ private:
 
   void setMode(RA8875_Mode mode);
   
-  void initPLL();
+  bool initPLL(void);
+  bool initDisplay(void);
 public:
   RA8875(int csPin, int intPin, int resetPin = 0);
 

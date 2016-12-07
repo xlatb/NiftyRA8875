@@ -93,29 +93,115 @@ void RA8875::softReset(void)
 
 }
 
-// Set up PLL for 480x272
-// 20MHz system clock * (10 + 1) / (2 ^ 2) = 55MHz
-void RA8875::initPLL(void)
+// Set up PLL
+// 320x240: 20MHz crystal * (10 + 1) / (2 ^ 2) = 55MHz system clock (SYS_CLK)
+// 480x272: 20MHz crystal * (10 + 1) / (2 ^ 2) = 55MHz system clock (SYS_CLK)
+// 640x480: 20MHz crystal * (11 + 1) / (2 ^ 2) = 60MHz system clock (SYS_CLK)
+// 800x480: 20MHz crystal * (11 + 1) / (2 ^ 2) = 60MHz system clock (SYS_CLK)
+bool RA8875::initPLL(void)
 {
+  int pllc1;
+  int pllc2 = 0x02;  // Divide by (2 ^ 2) = 4
+
+  if ((m_height == 240) || (m_height == 272))
+    pllc1 = 0x0A;  // PLL input parameter
+  else if (m_height == 480)
+    pllc1 = 0x0B;  // PLL input parameter
+  else
+    return false;  // Don't know how to configure PLL for this size
+
   SPI.beginTransaction(m_spiSettings);
 
-  writeCmd(RA8875_REG_PLLC1);
-  writeData(0x0A);  // PLL input parameter
-  
+  writeReg(RA8875_REG_PLLC1, pllc1);
+
   delay(2);
 
-  writeCmd(RA8875_REG_PLLC2);
-  writeData(0x02);  // Divide by (2 ^ 2) = 4
+  writeReg(RA8875_REG_PLLC2, pllc2);  // PLL output divider
 
   delay(2);
 
   SPI.endTransaction();
+
+  return true;
+}
+
+// Set up display for current colour depth and resolution.
+bool RA8875::initDisplay(void)
+{
+  uint8_t pcsr, hndftr, hndr, hstr, hpwr, vpwr;
+  uint16_t vndr, vstr;
+
+  if ((m_width == 480) && (m_height == 272))
+  {
+    pcsr   = 0x82;  // PDAT fetched on falling edge, PCLK is SYS_CLK / 4
+
+    hndftr = 0x00;  // DE polarity high, 0 pixels of tuning
+    hndr   = 0x01;  // (0x01 + 1) * 8 = 16px
+    hstr   = 0x00;  // (0x00 + 1) * 8 = 8px
+    hpwr   = 0x05;  // HSYNC active low, pulse width (0x05 + 1) * 8 = 48px
+
+    vndr   = 0x02;  // Vertical non-display period. 0x02 = 3 lines
+    vstr   = 0x07;  // Vertical start position
+    vpwr   = 0x09;  // VSYNC pulse width active low, width (0x09 + 1) = 10 lines
+  }
+  else if ((m_width == 800) && (m_height == 480))
+  {
+    pcsr   = 0x81;  // PDAT fetched on falling edge, PCLK is SYS_CLK / 2
+
+    hndftr = 0x00;  // DE polarity high, 0 pixels of tuning
+    hndr   = 0x03;  // (0x03 + 1) * 8 = 32px
+    hstr   = 0x03;  // (0x03 + 1) * 8 = 32px
+    hpwr   = 0x0B;  // HSYNC active low, pulse width (0x0B + 1) * 8 = 96px
+
+    vndr   = 0x20;  // Vertical non-display period. 0x20 = 33 lines
+    vstr   = 0x16;  // Vertical start position
+    vpwr   = 0x01;  // VSYNC pulse width active low, width (0x01 + 1) = 2 lines
+  }
+  else
+    return false;
+
+  SPI.beginTransaction(m_spiSettings);
+
+  // Set colour depth
+  writeReg(RA8875_REG_SYSR, (m_depth == 16) ? 0x08 : 0x00);
+  writeReg(RA8875_REG_PCSR, pcsr);  // 0x80 = PDAT fetched at PCLK falling edge, 0x02 = PCLK period is 4 times system clock period
+
+  delay(5);
+
+  // --- Horizontal regs ---
+  // Horizontal width: (HDWR + 1) * 8
+  writeReg(RA8875_REG_HDWR, (m_width / 8) - 1);  // Horizontal width is (HDWR + 1) * 8 = 480px. Max width is 0x63 = 800px.
+  // Horizontal non-display period. Total non-display period in pixels is (HNDR + 1) * 8 + (HNDFTR / 2 + 1) + 2
+  writeReg(RA8875_REG_HNDFTR, hndftr);  // Horiz non-display fine tuning
+  writeReg(RA8875_REG_HNDR, hndr);  // Horiz non-display period is (HNDR + 1) * 8
+  // HSYNC
+  writeReg(RA8875_REG_HSTR, hstr);  // HSYNC start position is (HSTR + 1) * 8
+  writeReg(RA8875_REG_HPWR, hpwr);  // HSYNC pulse width
+
+  // --- Vertical regs ---
+  // Vertial height: ((VDHR1 << 8) | VDHR0) + 1. Max height 0x1DF = 480px.
+  writeReg(RA8875_REG_VDHR0, (m_height - 1) & 0xFF);
+  writeReg(RA8875_REG_VDHR1, (m_height - 1) >> 8);
+  // Vertical non-display period. Total is ((VNDR1 << 8) | VNDR0) + 1
+  writeReg(RA8875_REG_VNDR0, vndr & 0xFF);
+  writeReg(RA8875_REG_VNDR1, vndr >> 8);
+  // VSYNC. Start position in pixel lines is: ((VSTR1 << 8) | VSTR0) + 1
+  writeReg(RA8875_REG_VSTR0, vstr & 0xFF);
+  writeReg(RA8875_REG_VSTR1, vstr >> 8);
+  writeReg(RA8875_REG_VPWR, vpwr);  // VSYNC pulse width active low, width (0x09 + 1) = 10 lines
+
+  SPI.endTransaction();
+
+  delay(5);
+
+  return true;
 }
 
 bool RA8875::init(int width, int height, int depth)
 {
   // Check resolution
-  if ((width != 480) || (height != 272))
+  if (!((width == 480) && (height == 272)) &&
+      !((width == 800) && (height == 480)))
     return false;
 
   // Check colour depth
@@ -142,57 +228,20 @@ bool RA8875::init(int width, int height, int depth)
   }
 
   SPI.begin();
-  
+
   m_spiSettings = SPISettings(RA8875_SPI_SPEED, MSBFIRST, SPI_MODE3);
+  // TODO: SPI.usingInterrupt(interruptNumber)?
 
   if (m_resetPin <= 0)
     softReset();
 
-  // TODO: Erase
-  Serial.println(m_csPin);
-  Serial.println(m_resetPin);
-  
-  // TODO: SPI.usingInterrupt(interruptNumber)?
+  if (!initPLL())
+    return false;
 
-  initPLL();
+  if (!initDisplay())
+    return false;
 
   SPI.beginTransaction(m_spiSettings);
-
-  // Set colour depth
-  writeReg(RA8875_REG_SYSR, (m_depth == 16) ? 0x08 : 0x00);
-
-  writeReg(RA8875_REG_PCSR, 0x82);  // 0x80 = PDAT fetched at PCLK falling edge, 0x02 = PCLK period is 4 times system clock period
-
-  delay(5);
-
-  // --- Horizontal regs ---
-  // Horizontal width: (HDWR + 1) * 8
-  writeReg(RA8875_REG_HDWR, 0x3B);  // Horizontal width is (0x3B + 1) * 8 = 480px. Max width is 0x63 = 800px.
-  // Horizontal non-display period. Total non-display period in pixels is (HNDR + 1) * 8 + (HNDFTR / 2 + 1) + 2
-  writeReg(RA8875_REG_HNDFTR, 0x00);  // DE polarity high, 0 pixels of tuning
-  writeReg(RA8875_REG_HNDR, 0x01);  // Horiz non-display period is (0x01 + 1) * 8 = 16px
-  // HSYNC
-  writeReg(RA8875_REG_HSTR, 0x00);  // HSYNC start position is (0x00 + 1) * 8 = 8px
-  writeReg(RA8875_REG_HPWR, 0x05);  // HSYNC active low, pulse width (0x05 + 1) * 8 = 48px
-
-  // --- Vertical regs ---
-  // Vertial height: ((VDHR1 << 8) | VDHR0) + 1. Max height 0x1DF = 480px.
-  writeCmd(RA8875_REG_VDHR0);
-  writeData(0x0F);
-  writeCmd(RA8875_REG_VDHR1);
-  writeData(0x01); // Vertical height ((0x01 << 8) | 0x0F) + 1 = 272px
-  // Vertical non-display period. Total is ((VNDR1 << 8) | VNDR0) + 1
-  writeCmd(RA8875_REG_VNDR0);  
-  writeData(0x02);
-  writeCmd(RA8875_REG_VNDR1);
-  writeData(0x00);  // Vert non-display period is ((0x00 << 8) | 0x02) + 1 = 3 lines
-  // VSYNC. Start position in pixel lines is: ((VSTR1 << 8) | VSTR0) + 1
-  writeCmd(RA8875_REG_VSTR0);
-  writeData(0x07);
-  writeCmd(RA8875_REG_VSTR1);
-  writeData(0x00);  // VSYNC start is ((0x00 << 8) | 0x07) + 1 = 8 lines
-  writeCmd(RA8875_REG_VPWR);
-  writeData(0x09);  // VSYNC pulse width active low, width (0x09 + 1) = 10 lines
 
   // --- Enable layers ---
   writeReg(RA8875_REG_DPCR, 0x80);
