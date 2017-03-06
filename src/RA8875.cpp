@@ -250,6 +250,8 @@ bool RA8875::init(int width, int height, int depth)
 
   setActiveWindow(0, m_width - 1, 0, m_height - 1);
 
+  selectInternalFont(RA8875_FONT_ENCODING_8859_1);
+
   // Turn display on
   SPI.beginTransaction(m_spiSettings);
   writeReg(RA8875_REG_PWRR, 0x80);  // Display on, normal mode, no reset
@@ -324,56 +326,31 @@ void RA8875::clearMemory(void)
     Serial.print("MCLR: ");
     Serial.println(status);
   } while ((status & 0x80) && ((millis() - starttime) < 250));
-  
+
   SPI.endTransaction();
 }
 
-// TODO: Split this apart into two functions, and have them both assume SPI transaction has already been started by the caller.
-void RA8875::setMode(RA8875_Mode mode)
+void RA8875::setTextMode(void)
 {
-  SPI.beginTransaction(m_spiSettings);
+  waitBusy();
+
+  // Restore text colour
+  writeReg(RA8875_REG_FGCR0, m_textColor >> 11);            // R
+  writeReg(RA8875_REG_FGCR1, (m_textColor & 0x07E0) >> 5);  // G
+  writeReg(RA8875_REG_FGCR2, m_textColor & 0x1F);           // B
 
   uint8_t mwcr0 = readReg(RA8875_REG_MWCR0);
-
-  if ((mode == RA8875_MODE_TEXT) && !(mwcr0 & 0x80))
-  {
-    writeData(mwcr0 | 0x80);  // Enable text mode
-
-    // Restore text colour
-    writeReg(RA8875_REG_FGCR0, m_textColor >> 11);            // R
-    writeReg(RA8875_REG_FGCR1, (m_textColor & 0x07E0) >> 5);  // G
-    writeReg(RA8875_REG_FGCR2, m_textColor & 0x1F);           // B
-
-    writeReg(RA8875_REG_FNCR0, 0x00);  // ROM font, internal ROM, charset ISO8859-1
-//    writeCmd(RA8875_REG_FNCR0);
-//    //uint8_t fncr0 = readData();
-//    //writeData(fncr0 & 0x6B);  // ROM font, internal ROM
-//    writeData(0x00);
-  }
-  else if ((mode == RA8875_MODE_GRAPHICS) && (mwcr0 & 0x80))
-  {
-    writeData(mwcr0 & ~0x80);  // Enable graphics mode
-  }
-  
-  SPI.endTransaction();
+  writeReg(RA8875_REG_MWCR0, mwcr0 | 0x80);  // Enable text mode
 }
 
-//// TODO: Replaced by setMode, remove?
-//void RA8875::setTextMode()
-//{
-//  SPI.beginTransaction(m_spiSettings);
-//
-//  writeCmd(RA8875_REG_MWCR0);
-//  uint8_t mwcr0 = readData();
-//  writeData(mwcr0 | 0x80);  // Enable text mode
-//
-//  writeCmd(RA8875_REG_FNCR0);
-//  //uint8_t fncr0 = readData();
-//  //writeData(fncr0 & 0x6B);  // ROM font, internal ROM
-//  writeData(0x00);  // ROM font, internal ROM, charset ISO8859-1
-//  
-//  SPI.endTransaction();
-//}
+void RA8875::setGraphicsMode(void)
+{
+  waitBusy();
+
+  // Set graphics mode
+  uint8_t mwcr0 = readReg(RA8875_REG_MWCR0);
+  writeReg(RA8875_REG_MWCR0, mwcr0 & ~0x80);  // Enable graphics mode
+}
 
 void RA8875::setCursor(int x, int y)
 {
@@ -422,6 +399,26 @@ void RA8875::setCursorVisibility(bool visible, bool blink)
   
   writeData(mwcr0);
   
+  SPI.endTransaction();
+}
+
+void RA8875::selectInternalFont(enum RA8875_Font_Encoding enc)
+{
+  // Invalid encodings become Latin 1
+  if (!(enc & 0x10) || (enc & 0xEC))
+    enc = RA8875_FONT_ENCODING_8859_1;
+
+  SPI.beginTransaction(m_spiSettings);
+
+  // Select ROM font, internal ROM, charset
+  uint8_t fncr0 = 0x00 | (enc & 0x03);
+  writeReg(RA8875_REG_FNCR0, fncr0);
+
+  // Datasheet says this register must be zero.
+  // Is that true? Just clear the low two bits for now.
+  uint8_t sfrs = readReg(RA8875_REG_SFRS);
+  writeReg(RA8875_REG_SFRS, sfrs & 0xFC);
+
   SPI.endTransaction();
 }
 
@@ -486,18 +483,15 @@ size_t RA8875::write(uint8_t c)
     setCursor(0, getCursorY() + (RA8875_ROM_TEXT_HEIGHT * getTextSizeY()));
   else
   {
-    setMode(RA8875_MODE_TEXT);
-
     SPI.beginTransaction(m_spiSettings);
 
-    writeCmd(RA8875_REG_MRWC);
+    setTextMode();
 
-    writeData(c);
-    delay(5);
+    writeReg(RA8875_REG_MRWC, c);
+
+    setGraphicsMode();
 
     SPI.endTransaction();
-
-    setMode(RA8875_MODE_GRAPHICS);
   }
 
   return 1;
@@ -506,9 +500,9 @@ size_t RA8875::write(uint8_t c)
 // Write a string to the display (called from class Print).
 size_t RA8875::write(const char *s)
 {
-  setMode(RA8875_MODE_TEXT);
-
   SPI.beginTransaction(m_spiSettings);
+
+  setTextMode();
 
   writeCmd(RA8875_REG_MRWC);
 
@@ -524,14 +518,14 @@ size_t RA8875::write(const char *s)
       setCursor(0, getCursorY() + (RA8875_ROM_TEXT_HEIGHT * getTextSizeY()));
     else
     {
+      waitBusy();
       writeData(c);
-      delay(5);
     }
   }
 
-  SPI.endTransaction();
+  setGraphicsMode();
 
-  setMode(RA8875_MODE_GRAPHICS);
+  SPI.endTransaction();
 
   return count;
 }
@@ -539,9 +533,9 @@ size_t RA8875::write(const char *s)
 // Write a number of bytes to the display (called from class Print).
 size_t RA8875::write(const uint8_t *bytes, size_t size)
 {
-  setMode(RA8875_MODE_TEXT);
-
   SPI.beginTransaction(m_spiSettings);
+
+  setTextMode();
 
   writeCmd(RA8875_REG_MRWC);
 
@@ -555,14 +549,14 @@ size_t RA8875::write(const uint8_t *bytes, size_t size)
       setCursor(0, getCursorY() + (RA8875_ROM_TEXT_HEIGHT * getTextSizeY()));
     else
     {
+      waitBusy();
       writeData(c);
-      delay(5);
     }
   }
 
-  SPI.endTransaction();
+  setGraphicsMode();
 
-  setMode(RA8875_MODE_GRAPHICS);
+  SPI.endTransaction();
 
   return size;
 }

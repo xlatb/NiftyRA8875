@@ -63,11 +63,6 @@ void setup()
   //tft.setLayerMode(RA8875_LAYER_OR);
 
   //tft.setDrawLayer(2);
-
-//  tft.drawRect(50, 50, 100, 100, RGB332(0, 255, 0));
-//  tft.fillRect(150, 50, 200, 100, RGB332(0, 255, 255));
-//  tft.drawLine(250, 50, 300, 100, RGB332(255, 0, 255));
-//  tft.drawRect(0, 256, 479, 271, RGB332(255, 0, 255));
 }
 
 void textTest()
@@ -94,6 +89,20 @@ void textTest()
     tft.print("Text size ");
     tft.println(s);
   }
+
+  // Test encodings
+  tft.setTextSize(1);
+  tft.selectInternalFont(RA8875_FONT_ENCODING_8859_1);
+  tft.println("Latin 1: na\xEFve");  // naïve
+
+  tft.selectInternalFont(RA8875_FONT_ENCODING_8859_2);
+  tft.println("Latin 2: \xE8" "a\xE8kalica");  // čačkalica ("toothpick" in Serbo-Croatian)
+
+  tft.selectInternalFont(RA8875_FONT_ENCODING_8859_3);
+  tft.println("Latin 3: g\xFCne\xBA");  // güneş ("sun" in Turkish)
+
+  tft.selectInternalFont(RA8875_FONT_ENCODING_8859_4);
+  tft.println("Latin 4: gie\xF0" "at");  // gieđat ("hands" in Northern Sami)
   
   Serial.println("Print text complete.");  
 }

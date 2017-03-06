@@ -43,6 +43,29 @@ enum RA8875_Layer_Mode
   RA8875_LAYER_FLOAT       = 0x06
 };
 
+enum RA8875_Font_Encoding
+{
+  // External font ROM encodings
+  RA8875_FONT_ENCODING_GB2312   = 0x00,  // GB2312 (Simplified Chinese)
+  RA8875_FONT_ENCODING_GB18030  = 0x01,  // GB12345/GB18030 (Chinese)
+  RA8875_FONT_ENCODING_BIG5     = 0x02,  // Big5 (Traditional Chinese)
+
+  RA8875_FONT_ENCODING_UNICODE  = 0x03,  // Unicode
+
+  RA8875_FONT_ENCODING_ASCII    = 0x04,  // ASCII
+
+  RA8875_FONT_ENCODING_UNIJAPAN = 0x05,  // Uni-Japanese
+  RA8875_FONT_ENCODING_JIS0208  = 0x06,  // JIS X 0208 (Shift JIS?)
+
+  RA8875_FONT_ENCODING_LGCA     = 0x07,  // Latin/Greek/Cyrillic/Arabic
+
+  // Internal font ROM encodings
+  RA8875_FONT_ENCODING_8859_1   = 0x10,  // ISO 8859-1 (Latin 1)
+  RA8875_FONT_ENCODING_8859_2   = 0x11,  // ISO 8859-2 (Latin 2: Eastern European)
+  RA8875_FONT_ENCODING_8859_3   = 0x12,  // ISO 8859-3 (Latin 3: South European)
+  RA8875_FONT_ENCODING_8859_4   = 0x13   // ISO 8859-4 (Latin 4: Northern European)
+};
+
 // Dimensions of the built-in ROM font
 #define RA8875_ROM_TEXT_WIDTH  8
 #define RA8875_ROM_TEXT_HEIGHT 16
@@ -88,6 +111,7 @@ enum RA8875_Layer_Mode
 #define RA8875_REG_FCURY0 0x2C  // Font write cursor y register 0 (F_CURYL)
 #define RA8875_REG_FCURY1 0x2D  // Font write cursor y register 1 (F_CURYH)
 #define RA8875_REG_FWTSR  0x2E  // Font write type setting register
+#define RA8875_REG_SFRS   0x2F  // Serial Font ROM Setting
 
 // Data sheet 5-4: Active window & scroll window setting registers
 #define RA8875_REG_HSAW0  0x30  // Horizontal start point 0 of active window
@@ -196,7 +220,7 @@ private:
 
   void hardReset(void);
   void softReset(void);
-  
+
   void writeCmd(uint8_t x);
   void writeData(uint8_t x);
   uint8_t readData(void);
@@ -205,8 +229,11 @@ private:
   void writeReg(uint8_t reg, uint8_t x);
   uint8_t readReg(uint8_t reg);
 
-  void setMode(RA8875_Mode mode);
-  
+  inline void waitBusy(void) { while (readStatus() & 0xC0); };
+
+  void setTextMode(void);
+  void setGraphicsMode(void);
+
   bool initPLL(void);
   bool initDisplay(void);
 public:
@@ -228,6 +255,9 @@ public:
   int getCursorX(void);
   int getCursorY(void);
   void setCursorVisibility(bool visible, bool blink);
+
+  // Text font
+  void selectInternalFont(enum RA8875_Font_Encoding enc = RA8875_FONT_ENCODING_8859_1);
 
   // Text size
   void setTextSize(int xScale, int yScale);
