@@ -561,6 +561,47 @@ size_t RA8875::write(const uint8_t *bytes, size_t size)
   return size;
 }
 
+void RA8875::putChars(const char *buffer, size_t size)
+{
+  SPI.beginTransaction(m_spiSettings);
+
+  setTextMode();
+
+  // Write characters
+  writeCmd(RA8875_REG_MRWC);
+  for (unsigned int i = 0; i < size; i++)
+  {
+    waitBusy();
+    writeData(buffer[i]);
+  }
+
+  setGraphicsMode();
+
+  SPI.endTransaction();
+}
+
+void RA8875::putChars16(const uint16_t *buffer, unsigned int count)
+{
+  SPI.beginTransaction(m_spiSettings);
+
+  setTextMode();
+
+  // Write characters
+  writeCmd(RA8875_REG_MRWC);
+  for (unsigned int i = 0; i < count; i++)
+  {
+    waitBusy();
+    writeData(buffer[i] >> 8);
+
+    waitBusy();
+    writeData(buffer[i] & 0xFF);
+  }
+
+  setGraphicsMode();
+
+  SPI.endTransaction();
+}
+
 void RA8875::setScrollWindow(int xStart, int xEnd, int yStart, int yEnd)
 {
   SPI.beginTransaction(m_spiSettings);

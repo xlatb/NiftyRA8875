@@ -273,6 +273,10 @@ public:
   virtual size_t write(uint8_t);
   virtual size_t write(const char *str);
   virtual size_t write(const uint8_t *buffer, size_t size);
+  void putChar(char c) { putChars(&c, 1); };
+  void putChars(const char *buffer, size_t size);
+  void putChar16(uint16_t c) { putChars16(&c, 1); };
+  void putChars16(const uint16_t *buffer, unsigned int count);
 
   // Scrolling
   void setScrollWindow(int xStart, int xEnd, int yStart, int yEnd);
