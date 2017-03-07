@@ -43,6 +43,13 @@ enum RA8875_Layer_Mode
   RA8875_LAYER_FLOAT       = 0x06
 };
 
+enum RA8875_Font_Size
+{
+  RA8875_FONT_SIZE_16 = 0x00,
+  RA8875_FONT_SIZE_24 = 0x01,
+  RA8875_FONT_SIZE_32 = 0x02
+};
+
 enum RA8875_Font_Encoding
 {
   // External font ROM encodings
@@ -66,6 +73,25 @@ enum RA8875_Font_Encoding
   RA8875_FONT_ENCODING_8859_4   = 0x13   // ISO 8859-4 (Latin 4: Northern European)
 };
 
+enum RA8875_External_Font_Rom
+{
+  RA8875_FONT_ROM_GT21L16T1W = 0,
+  RA8875_FONT_ROM_GT30L16U2W = 1,
+  RA8875_FONT_ROM_GT30L24T3Y = 2,
+  RA8875_FONT_ROM_GT30L24M1Z = 3,
+  RA8875_FONT_ROM_GT30L32S4W = 4
+};
+
+enum RA8875_External_Font_Family
+{
+  RA8875_FONT_FAMILY_FIXED      = 0,
+  RA8875_FONT_FAMILY_ARIAL      = 1,
+  RA8875_FONT_FAMILY_TIMES      = 2,
+  RA8875_FONT_FAMILY_FIXED_BOLD = 3
+};
+
+typedef uint8_t RA8875_Font_Flags;
+
 // Dimensions of the built-in ROM font
 #define RA8875_ROM_TEXT_WIDTH  8
 #define RA8875_ROM_TEXT_HEIGHT 16
@@ -83,6 +109,8 @@ enum RA8875_Font_Encoding
 #define RA8875_REG_PWRR   0x01  // Power and display control register
 #define RA8875_REG_MRWC   0x02  // Memory read/write command
 #define RA8875_REG_PCSR   0x04  // Pixel clock setting register
+#define RA8875_REG_SROC   0x05  // Serial Flash/ROM configuration register
+#define RA8875_REG_SFCLR  0x06  // Serial Flash/ROM CLK setting register
 #define RA8875_REG_SYSR   0x10  // System configuration register
 #define RA8875_REG_HDWR   0x14  // Horizontal display width register
 #define RA8875_REG_HNDFTR 0x15  // Horiz non-display period fine tuning option register
@@ -199,6 +227,9 @@ enum RA8875_Font_Encoding
 // Data sheet 5-13: Key & IO control registers
 #define RA8875_REG_GPIOX  0xC7  // Extra general purpose IO register
 
+// Data sheet 5-15: Serial flash control registers
+#define RA8875_REG_SACS_MODE 0xE0  // Serial Flash/ROM Access Mode
+
 // Data sheet 5-16: Interrupt control registers
 #define RA8875_REG_INTC1  0xF0  // Interrupt control register 1
 #define RA8875_REG_INTC2  0xF1  // Interrupt control register 2
@@ -241,6 +272,8 @@ public:
 
   // Init
   bool init(int width, int height, int depth);
+  void initExternalFontRom(int spiIf, enum RA8875_External_Font_Rom chip);
+
   void clearMemory();
   void setBacklight(bool enabled);
   
@@ -258,6 +291,7 @@ public:
 
   // Text font
   void selectInternalFont(enum RA8875_Font_Encoding enc = RA8875_FONT_ENCODING_8859_1);
+  void selectExternalFont(enum RA8875_External_Font_Family family, enum RA8875_Font_Size size, enum RA8875_Font_Encoding enc, RA8875_Font_Flags flags = 0);
 
   // Text size
   void setTextSize(int xScale, int yScale);

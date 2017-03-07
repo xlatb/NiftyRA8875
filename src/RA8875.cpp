@@ -260,6 +260,28 @@ bool RA8875::init(int width, int height, int depth)
   return true;
 }
 
+void RA8875::initExternalFontRom(int spiIf, enum RA8875_External_Font_Rom chip)
+{
+  SPI.beginTransaction(m_spiSettings);
+
+  // TODO: Calculate the clock from the system clock. Could probably go faster.
+  //  Need to rewrite initPLL() first.
+  writeReg(RA8875_REG_SFCLR, 0x03);  // Use system clock / 4 for SPI
+
+  uint8_t sroc = 0x08;  // 24-bit address mode, SPI mode 0, 1 byte dummy cycle, font mode, single mode
+  sroc |= (spiIf & 0x01) << 7;
+  writeReg(RA8875_REG_SROC, sroc);
+
+  // Turn on font/DMA mode
+  writeReg(RA8875_REG_SACS_MODE, 0x00);
+
+  // Select font chip
+  uint8_t sfrs = readReg(RA8875_REG_SFRS);
+  sfrs = (sfrs & 0x1F) | ((chip & 0x07) << 5);
+  writeReg(RA8875_REG_SFRS, sfrs);
+
+  SPI.endTransaction();
+}
 
 void RA8875::setBacklight(bool enabled)
 {
@@ -418,6 +440,28 @@ void RA8875::selectInternalFont(enum RA8875_Font_Encoding enc)
   // Is that true? Just clear the low two bits for now.
   uint8_t sfrs = readReg(RA8875_REG_SFRS);
   writeReg(RA8875_REG_SFRS, sfrs & 0xFC);
+
+  SPI.endTransaction();
+}
+
+void RA8875::selectExternalFont(enum RA8875_External_Font_Family family, enum RA8875_Font_Size size, enum RA8875_Font_Encoding enc, RA8875_Font_Flags flags)
+{
+  // Invalid encodings become ASCII
+  if (enc & 0xF8)
+    enc = RA8875_FONT_ENCODING_ASCII;
+
+  SPI.beginTransaction(m_spiSettings);
+
+  // Select ROM font, external ROM,
+  writeReg(RA8875_REG_FNCR0, 0x20);
+
+  // Select font size
+  writeReg(RA8875_REG_FWTSR, (size & 0x03) << 6);
+
+  uint8_t sfrs = readReg(RA8875_REG_SFRS);
+  sfrs = (sfrs & 0xE0) | (enc << 2) | (family & 0x03);
+  writeReg(RA8875_REG_SFRS, sfrs);
+  //Serial.print("sfrs: "); Serial.println(sfrs, HEX);
 
   SPI.endTransaction();
 }
