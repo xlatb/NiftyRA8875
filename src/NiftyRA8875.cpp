@@ -1,5 +1,5 @@
 #pragma GCC diagnostic warning "-Wall"
-#include "RA8875.h"
+#include "NiftyRA8875.h"
 
 void RA8875::writeCmd(uint8_t x)
 {
