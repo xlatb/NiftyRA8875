@@ -1,5 +1,5 @@
 #pragma GCC diagnostic warning "-Wall"
-#include "RA8875.h"
+#include "NiftyRA8875.h"
 
 const int intPin = 0;
 const int csPin = 10;
