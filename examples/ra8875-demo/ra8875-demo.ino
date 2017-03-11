@@ -1,11 +1,11 @@
 #pragma GCC diagnostic warning "-Wall"
 #include "NiftyRA8875.h"
 
-const int intPin = 0;
 const int csPin = 10;
 const int resetPin = 9;
 
-RA8875 tft = RA8875(csPin, intPin);
+//RA8875 tft = RA8875(csPin, resetPin);
+RA8875 tft = RA8875(csPin);
 
 void setup()
 {

@@ -49,11 +49,11 @@ uint8_t RA8875::readReg(uint8_t reg)
   return readData();
 }
 
-RA8875::RA8875(int csPin, int intPin, int resetPin)
+RA8875::RA8875(int csPin, int resetPin)
 {
   m_csPin    = csPin;
-  m_intPin   = intPin;
   m_resetPin = resetPin;
+  m_intPin   = -1;
 
   m_width  = 0;
   m_height = 0;
@@ -230,9 +230,8 @@ bool RA8875::init(int width, int height, int depth)
   SPI.begin();
 
   m_spiSettings = SPISettings(RA8875_SPI_SPEED, MSBFIRST, SPI_MODE3);
-  // TODO: SPI.usingInterrupt(interruptNumber)?
 
-  if (m_resetPin <= 0)
+  if (m_resetPin < 0)
     softReset();
 
   if (!initPLL())

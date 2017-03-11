@@ -268,7 +268,7 @@ private:
   bool initPLL(void);
   bool initDisplay(void);
 public:
-  RA8875(int csPin, int intPin, int resetPin = 0);
+  RA8875(int csPin, int resetPin = -1);
 
   // Init
   bool init(int width, int height, int depth);
