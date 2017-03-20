@@ -7,6 +7,13 @@
 #include <SPI.h>
 
 #define RA8875_PRINT_TIMING 0
+#define RA8875_ALLOW_TRACE 1
+
+#if RA8875_ALLOW_TRACE
+# define RA8875_TRACE(fmt...) do { if (m_tracePrint) { char tracebuf[128]; snprintf(tracebuf, 128, fmt); m_tracePrint->println(tracebuf); } } while(false)
+#else
+# define RA8875_TRACE(fmt...)
+#endif
 
 //#define RGBPACK(r, g, b) ((((r) & 0x07) << 5) | (((g) & 0x07) << 2) | ((b) & 0x03))
 #define RGB332(r, g, b) (((r) & 0xE0) | (((g) & 0xE0) >> 3) | (((b) & 0xE0) >> 6))
@@ -249,6 +256,8 @@ private:
 
   SPISettings m_spiSettings;
 
+  Print *m_tracePrint;
+
   void hardReset(void);
   void softReset(void);
 
@@ -345,6 +354,9 @@ public:
   void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color) { drawThreePointShape(x1, y1, x2, y2, x3, y3, color, 0x21); };
   void drawCircle(int x, int y, int radius, uint16_t color) { drawCircleShape(x, y, radius, color, 0x00); };
   void fillCircle(int x, int y, int radius, uint16_t color) { drawCircleShape(x, y, radius, color, 0x20); };
+
+  // Debug trace
+  void setTrace(Print *p) { m_tracePrint = p; };
 };
 
 #endif

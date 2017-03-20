@@ -58,11 +58,15 @@ RA8875::RA8875(int csPin, int resetPin)
   m_width  = 0;
   m_height = 0;
   m_depth  = 0;
+
+  m_tracePrint = NULL;
 }
 
 // Pulse the reset pin low
 void RA8875::hardReset(void)
 {
+  RA8875_TRACE("hardReset");
+
   delay(5);
   digitalWrite(m_resetPin, LOW);
   delay(5);
@@ -72,20 +76,21 @@ void RA8875::hardReset(void)
 
 void RA8875::softReset(void)
 {
+  RA8875_TRACE("softReset");
+
   // If no reset pin is hooked up, try software reset command
   SPI.beginTransaction(m_spiSettings);
 
   delay(50);
-  Serial.println("Soft reset 0");
   uint8_t pwrr = readReg(RA8875_REG_PWRR);
-  Serial.print("PWRR is: "); Serial.println(pwrr, HEX);
+  RA8875_TRACE("  PWRR is: %02X", pwrr);
   delay(50);
   pwrr |= 0x01;
-  Serial.println("Soft reset 1");
+  RA8875_TRACE("  Soft reset 1");
   writeReg(RA8875_REG_PWRR, pwrr);
   delay(50);
   pwrr &= 0xFE;
-  Serial.println("Soft reset 2");
+  RA8875_TRACE("  Soft reset 2");
   writeReg(RA8875_REG_PWRR, pwrr);
   delay(50);
 
@@ -100,6 +105,8 @@ void RA8875::softReset(void)
 // 800x480: 20MHz crystal * (11 + 1) / (2 ^ 2) = 60MHz system clock (SYS_CLK)
 bool RA8875::initPLL(void)
 {
+  RA8875_TRACE("initPLL");
+
   int pllc1;
   int pllc2 = 0x02;  // Divide by (2 ^ 2) = 4
 
@@ -128,6 +135,8 @@ bool RA8875::initPLL(void)
 // Set up display for current colour depth and resolution.
 bool RA8875::initDisplay(void)
 {
+  RA8875_TRACE("initDisplay");
+
   uint8_t pcsr, hndftr, hndr, hstr, hpwr, vpwr;
   uint16_t vndr, vstr;
 
@@ -344,8 +353,7 @@ void RA8875::clearMemory(void)
   do
   {
     status = readReg(RA8875_REG_MCLR);
-    Serial.print("MCLR: ");
-    Serial.println(status);
+    RA8875_TRACE("MCLR: %02X", status);
   } while ((status & 0x80) && ((millis() - starttime) < 250));
 
   SPI.endTransaction();
@@ -404,9 +412,6 @@ void RA8875::setCursorVisibility(bool visible, bool blink)
 
   writeCmd(RA8875_REG_MWCR0);
   uint8_t mwcr0 = readData();
-
-  Serial.print("WMCR0: ");
-  Serial.println(mwcr0);
 
   if (visible)
     mwcr0 |= 0x40;
@@ -689,10 +694,10 @@ void RA8875::setLayerMode(enum RA8875_Layer_Mode mode)
 
   uint8_t ltpr0 = readReg(RA8875_REG_LTPR0);
 
-  Serial.print("mode: "); Serial.println(mode);
+  //Serial.print("mode: "); Serial.println(mode);
   ltpr0 = (ltpr0 & 0xF8) | mode;
   writeReg(RA8875_REG_LTPR0, ltpr0);
-  Serial.print("LTPR0: "); Serial.println(ltpr0, HEX);
+  //Serial.print("LTPR0: "); Serial.println(ltpr0, HEX);
 
   writeReg(RA8875_REG_LTPR1, 0x00);  // Enable display of both layers
   
