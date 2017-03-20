@@ -78,7 +78,6 @@ void RA8875::softReset(void)
 {
   RA8875_TRACE("softReset");
 
-  // If no reset pin is hooked up, try software reset command
   SPI.beginTransaction(m_spiSettings);
 
   delay(50);
@@ -208,6 +207,8 @@ bool RA8875::initDisplay(void)
 
 bool RA8875::init(int width, int height, int depth)
 {
+  RA8875_TRACE("init() started");
+
   // Check resolution
   if (!((width == 480) && (height == 272)) &&
       !((width == 800) && (height == 480)))
@@ -223,12 +224,16 @@ bool RA8875::init(int width, int height, int depth)
 
   m_textColor = RGB565(255, 255, 255);
 
+  // Set up CS pin
   pinMode(m_csPin, OUTPUT);
-  pinMode(m_intPin, INPUT);
-
   digitalWrite(m_csPin, HIGH);
 
-  if (m_resetPin < 0)
+  // If we have an int pin, set it up
+  if (m_intPin >= 0)
+    pinMode(m_intPin, INPUT);
+
+  // If we have a reset pin, do a hard reset
+  if (m_resetPin >= 0)
   {
     pinMode(m_resetPin, OUTPUT);
     digitalWrite(m_resetPin, HIGH);
@@ -240,6 +245,7 @@ bool RA8875::init(int width, int height, int depth)
 
   m_spiSettings = SPISettings(RA8875_SPI_SPEED, MSBFIRST, SPI_MODE3);
 
+  // If no reset pin is hooked up, try software reset command
   if (m_resetPin < 0)
     softReset();
 
@@ -265,6 +271,7 @@ bool RA8875::init(int width, int height, int depth)
   writeReg(RA8875_REG_PWRR, 0x80);  // Display on, normal mode, no reset
   SPI.endTransaction();
 
+  RA8875_TRACE("init() completed");
   return true;
 }
 
